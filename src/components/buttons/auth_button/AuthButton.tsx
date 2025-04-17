@@ -131,7 +131,7 @@ export const AuthButton = ({
     switch (provider) {
       case "google":
         baseClasses.push(
-          "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
+          "bg-white text-gray-800 border border-gray-400 hover:bg-gray-50"
         );
         break;
       case "facebook":
