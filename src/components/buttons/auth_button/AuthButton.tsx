@@ -135,7 +135,7 @@ export const AuthButton = ({
         );
         break;
       case "facebook":
-        baseClasses.push("bg-blue-600 text-white hover:bg-blue-700");
+        baseClasses.push("bg-blue-500 text-white hover:bg-blue-700");
         break;
       case "apple":
         baseClasses.push("bg-black text-white hover:bg-gray-800");
