@@ -141,7 +141,7 @@ export const AuthButton = ({
         baseClasses.push("bg-black text-white hover:bg-gray-800");
         break;
       case "twitter":
-        baseClasses.push("bg-blue-400 text-white hover:bg-blue-500");
+        baseClasses.push("bg-blue-600 text-white hover:bg-blue-500");
         break;
       case "figma":
         baseClasses.push("bg-black text-white hover:bg-gray-800");
