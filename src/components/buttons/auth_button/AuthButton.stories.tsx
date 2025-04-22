@@ -12,7 +12,7 @@ const meta = {
   argTypes: {
     provider: {
       control: "select",
-      options: ["google", "facebook", "apple", "twitter", "figma", "dribbble"],
+      options: ["google", "facebook", "apple", "twitter", "figma"],
     },
     variant: {
       control: "select",
