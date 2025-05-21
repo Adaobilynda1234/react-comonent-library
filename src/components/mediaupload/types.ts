@@ -12,4 +12,5 @@ export interface MediaUploadProps {
   defaultIcon?: string;
   customClass?: string;
   customText?: string;
+  customErrorMessage?: string;
 }

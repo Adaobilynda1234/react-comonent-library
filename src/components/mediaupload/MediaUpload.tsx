@@ -2,11 +2,13 @@ import { useState, useRef } from "react";
 import type { MediaUploadProps, FileItem } from "./types";
 import {
   DefaultIcon,
+  getFileTypeIcon,
   InProgressIcon,
   CompleteIcon,
   ErrorIcon,
   DeleteIcon,
   DownloadIcon,
+  RetryIcon,
 } from "./icons";
 
 const MediaUpload = ({
@@ -15,6 +17,7 @@ const MediaUpload = ({
   defaultIcon = DefaultIcon,
   customClass = "",
   customText = "",
+  customErrorMessage = "Error message",
 }: MediaUploadProps) => {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -76,6 +79,7 @@ const MediaUpload = ({
     });
   };
 
+  // @ts-ignore: Suppress 'handleDrag is declared but its value is never read'
   const handleDrag = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -86,6 +90,7 @@ const MediaUpload = ({
     }
   };
 
+  // @ts-ignore: Suppress 'handleDrop is declared but its value is never read'
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -182,60 +187,68 @@ const MediaUpload = ({
     }, 500);
   };
 
-  const renderStatusIcon = (status: string) => {
-    switch (status) {
-      case "in-progress":
-        return InProgressIcon;
-      case "complete":
-        return CompleteIcon;
-      case "error":
-        return ErrorIcon;
-      default:
-        return defaultIcon;
-    }
+  const renderStatusIcon = (status: string, fileName: string) => {
+    if (status === "in-progress") return InProgressIcon;
+    if (status === "complete") return CompleteIcon;
+    if (status === "error") return ErrorIcon;
+    return getFileTypeIcon(fileName) || DefaultIcon;
   };
 
   return (
     <div
-      className={`border-2 border-dashed ${
-        variant === "standard" ? "border-purple-500" : "border-gray-300"
-      } p-6 rounded-lg ${customClass} ${dragActive ? "bg-gray-100" : ""}`}
-      onDragEnter={variant === "drag-and-drop" ? handleDrag : undefined}
-      onDragOver={variant === "drag-and-drop" ? handleDrag : undefined}
-      onDragLeave={variant === "drag-and-drop" ? handleDrag : undefined}
-      onDrop={variant === "drag-and-drop" ? handleDrop : undefined}
+      className={`border-2 border-dashed border-black p-2 sm:p-3 md:p-3 rounded-lg ${customClass} ${
+        dragActive ? "bg-gray-100" : ""
+      }`}
     >
       <div
         className={
           variant === "standard"
-            ? "flex items-center justify-center gap-2"
-            : "flex flex-col items-center gap-4"
+            ? "flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4"
+            : "flex flex-col items-center gap-2"
         }
       >
-        <span dangerouslySetInnerHTML={{ __html: defaultIcon }} />
+        <span
+          dangerouslySetInnerHTML={{ __html: defaultIcon }}
+          className="w-6 h-6 sm:w-8 sm:h-8"
+        />
         {variant === "standard" ? (
           <>
+            <div className="text-center sm:text-left">
+              <p className="text-gray-600 font-bold text-sm sm:text-base">
+                {customText || "Upload your document"}
+              </p>
+              <p className="text-gray-500 text-xs sm:text-sm">
+                PDF format + Max 5MB
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="bg-purple-700 text-white px-4 py-2 rounded"
+              className="bg-black text-white px-3 py-1 rounded text-sm sm:text-base"
             >
-              {customText || "Upload"}
+              Upload
             </button>
-            <span>PDF format + Max 5MB</span>
           </>
         ) : (
           <>
-            <p className="text-green-600">
-              {customText || "Click to upload or drag & drop"}
+            <p className="flex flex-wrap justify-center gap-1 text-sm sm:text-base">
+              <span className="text-green-600">
+                {customText ? customText.split(" or ")[0] : "Click to upload"}
+              </span>
+              <span className="text-black">
+                {customText
+                  ? "or " + customText.split(" or ")[1]
+                  : "or drag & drop"}
+              </span>
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-gray-500 text-xs sm:text-sm">
               SVG, PNG, JPG or GIF (max 800x400px)
             </p>
+            <p className="text-gray-500 text-xs sm:text-sm">OR</p>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="bg-purple-700 text-white px-4 py-2 rounded"
+              className="bg-black text-white px-3 py-1 rounded text-sm sm:text-base"
             >
               Browse Files
             </button>
@@ -249,25 +262,25 @@ const MediaUpload = ({
           className="hidden"
         />
       </div>
-      <div className="mt-4 space-y-2">
+      <div className="mt-2 sm:mt-3 space-y-2">
         {files.map((file, index) => (
           <div
             key={index}
-            className={`p-4 rounded-lg ${
+            className={`p-1 sm:p-2 border border-dashed border-black rounded-lg ${
               variant === "standard"
                 ? "flex items-center justify-between bg-gray-50"
                 : ""
             } ${
               variant === "drag-and-drop" && file.status === "in-progress"
-                ? "bg-orange-100"
+                ? "bg-orange-50"
                 : ""
             } ${
               variant === "drag-and-drop" && file.status === "complete"
-                ? "bg-green-100"
+                ? "bg-green-50"
                 : ""
             } ${
               variant === "drag-and-drop" && file.status === "error"
-                ? "bg-red-100"
+                ? "bg-red-50"
                 : ""
             }`}
           >
@@ -276,94 +289,187 @@ const MediaUpload = ({
                 <div className="flex items-center gap-2">
                   <span
                     dangerouslySetInnerHTML={{
-                      __html: renderStatusIcon(file.status),
+                      __html: renderStatusIcon(file.status, file.name),
                     }}
+                    className="w-6 h-6 sm:w-8 sm:h-8"
                   />
                   <div>
-                    <p>{file.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {file.date} + {file.size}
+                    <p className="text-gray-800 text-sm sm:text-base">
+                      {file.name}
                     </p>
+                    <p className="text-xs sm:text-sm text-gray-500">
+                      {file.date}
+                      {file.status === "complete" && ` + ${file.size}`}
+                    </p>
+                    {file.status === "error" && (
+                      <p className="text-xs sm:text-sm text-red-500">
+                        {customErrorMessage}
+                      </p>
+                    )}
                   </div>
                 </div>
-                {file.status === "in-progress" ? (
-                  <span className="w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                {file.status === "in-progress" && file.progress ? (
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-8 h-8 sm:w-10 sm:h-10">
+                      <svg className="w-full h-full" viewBox="0 0 36 36">
+                        <path
+                          className="text-gray-300"
+                          d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
+                        <path
+                          className="text-orange-500"
+                          d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeDasharray={`${file.progress}, 100`}
+                        />
+                      </svg>
+                      <span className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm text-gray-600">
+                        {file.progress}%
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemove(index)}
+                      className="text-gray-500"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M6 18L18 6M6 6l12 12"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                 ) : file.status === "error" ? (
                   <button
                     type="button"
                     onClick={() => handleRetry(index)}
-                    className="text-orange-500"
+                    className="flex items-center gap-1 text-orange-500 text-sm sm:text-base"
                   >
-                    Try Again
+                    <span dangerouslySetInnerHTML={{ __html: RetryIcon }} />
+                    <span>Try Again</span>
                   </button>
                 ) : (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(index)}
-                      className="text-red-500"
-                    >
-                      <span dangerouslySetInnerHTML={{ __html: DeleteIcon }} />
-                    </button>
-                    <button type="button" className="text-green-500 ml-2">
-                      <span
-                        dangerouslySetInnerHTML={{ __html: DownloadIcon }}
-                      />
-                    </button>
-                  </div>
+                  file.status === "complete" && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(index)}
+                        className="text-red-500"
+                      >
+                        <span
+                          dangerouslySetInnerHTML={{ __html: DeleteIcon }}
+                          className="w-4 h-4 sm:w-5 sm:h-5"
+                        />
+                      </button>
+                      <button type="button" className="text-blue-500">
+                        <span
+                          dangerouslySetInnerHTML={{ __html: DownloadIcon }}
+                          className="w-4 h-4 sm:w-5 sm:h-5"
+                        />
+                      </button>
+                    </div>
+                  )
                 )}
               </>
             ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: renderStatusIcon(file.status),
-                    }}
-                  />
-                  <div>
-                    <p>
-                      {file.status === "in-progress"
-                        ? "Uploading..."
-                        : file.status === "error"
-                        ? "Failed to Upload"
-                        : "Upload Complete"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {file.name} ({file.date})
-                    </p>
-                  </div>
-                </div>
-                {file.progress && (
-                  <div className="mt-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className="flex flex-col items-center gap-2">
+                {file.status === "in-progress" && file.progress ? (
+                  <div className="relative">
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: getFileTypeIcon(file.name) || DefaultIcon,
+                      }}
+                      className="w-6 h-6 sm:w-8 sm:h-8 absolute top-0 left-1/2 transform -translate-x-1/2"
+                    />
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-6 sm:mt-8">
                       <div
-                        className="bg-orange-500 h-2.5 rounded-full"
+                        className="bg-red-500 h-2 rounded-full"
                         style={{ width: `${file.progress}%` }}
-                      ></div>
+                      />
                     </div>
-                    <p className="text-sm text-gray-500">{file.progress}%</p>
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      {file.progress}%
+                    </p>
+                    <p className="text-sm sm:text-base text-gray-800 mt-1">
+                      Uploading Document... ({file.name})
+                    </p>
                   </div>
+                ) : (
+                  <>
+                    <div className="flex flex-col items-center gap-1">
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: renderStatusIcon(file.status, file.name),
+                        }}
+                        className="w-6 h-6 sm:w-8 sm:h-8"
+                      />
+                      <p className="text-sm sm:text-base font-bold text-gray-800">
+                        {file.status === "error"
+                          ? "Failed to Upload"
+                          : "Uploading Document..."}
+                      </p>
+                      <p className="text-sm sm:text-base text-gray-800">
+                        ({file.name})
+                      </p>
+                    </div>
+                    {file.status === "error" && (
+                      <p className="text-xs sm:text-sm text-red-500">
+                        {customErrorMessage}
+                      </p>
+                    )}
+                    {file.status === "complete" && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(index)}
+                          className="text-red-500"
+                        >
+                          <span
+                            dangerouslySetInnerHTML={{ __html: DeleteIcon }}
+                            className="w-4 h-4 sm:w-5 sm:h-5"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemove(index)}
+                          className="text-blue-500 text-sm sm:text-base"
+                        >
+                          Clear Upload
+                        </button>
+                      </div>
+                    )}
+                    {file.status === "error" && (
+                      <button
+                        type="button"
+                        onClick={() => handleRetry(index)}
+                        className="flex items-center gap-1 text-red-500 text-sm sm:text-base"
+                      >
+                        <span dangerouslySetInnerHTML={{ __html: RetryIcon }} />
+                        <span>Try Again</span>
+                      </button>
+                    )}
+                  </>
                 )}
-                {file.status === "complete" && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(index)}
-                    className="mt-2 text-blue-500 text-sm"
-                  >
-                    Clear Upload
-                  </button>
-                )}
-                {file.status === "error" && (
-                  <button
-                    type="button"
-                    onClick={() => handleRetry(index)}
-                    className="mt-2 text-orange-500 text-sm"
-                  >
-                    Try Again
-                  </button>
-                )}
-              </>
+              </div>
             )}
           </div>
         ))}
