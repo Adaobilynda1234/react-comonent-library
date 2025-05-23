@@ -13,4 +13,5 @@ export interface MediaUploadProps {
   customClass?: string;
   customText?: string;
   customErrorMessage?: string;
+  customDragText?: { click?: string; drag?: string };
 }
